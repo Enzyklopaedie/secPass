@@ -12,7 +12,7 @@ uint8_t PARALLELISM = 4;
 #define ENCODED_LEN 128
 #define MAX_PW_LEN 64
 
-int hashPassword(const char *password){
+int hashMasterPassword(const char *password){
     uint8_t salt[SALTLEN];
     uint8_t result = getrandom(salt, SALTLEN, 0);
 
@@ -33,18 +33,64 @@ int hashPassword(const char *password){
     return 0;
 }
 
+int verifyMasterPassword(const char *argonString, const char *password){
+    int result = argon2id_verify(argonString,password,strlen(password));
+    if (result != 0){
+        printf("Master Passwort Verification failed: %s\n", argon2_error_message(result));
+        return 1;
+    }
+}
 
 int main(){
+    char option[1] = {1};             // 1 = hash your Masterpassword, 2 = verify Masterpassword
+    printf("Do you want to...\n \
+        \t1: get an Argon2 string for a password?\n \
+        \t2: verify if your Masterpassword matches your Argon2 string?\n");
+    if (fgets(option,0,stdin) == NULL){
+        printf("Something went wrong.");
+    }
     char password[MAX_PW_LEN];
-    printf("Please enter your password: ");
-    if (fgets(password, MAX_PW_LEN,stdin) == NULL){
-        printf("Smth failed.");
-        return 1;
-    };
+    switch (option[0]){
+        case 1:
 
-    password[strcspn(password, "\n")] = 0;      // null-terminator
+        printf("Please enter your password: \n");
+            if (fgets(password, MAX_PW_LEN,stdin) == NULL){
+                printf("Smth failed.");
+                return 1;
+            };
+            password[strcspn(password, "\n")] = 0;      // null-terminator
+            hashMasterPassword(password);
+            memset(password,0,strlen(password));        // delete the password from RAM
+            return 0;
+        case 2:
+            
+            char argonString[ENCODED_LEN];
 
-    hashPassword(password);
-    memset(password,0,strlen(password));        // delete the password from RAM
-    return 0;
+            printf("Enter your password: \n");
+            if (fgets(password,0,stdin) == NULL){
+                printf("Something went wrong.");
+            }
+            password[strcspn(password, "\n")] = 0;
+
+
+            printf("Enter your Argon2ID string: \n");
+            if (fgets(argonString,0,stdin) == NULL){
+                printf("Something went wrong.");
+                // return 1;
+            }
+            argonString[strcspn(argonString, "\n")] = 0;
+
+            if (password == argonString){
+                printf("Success!");
+                return 0;
+            }
+            else{
+                printf("Not the same password");
+                return 0;
+            }
+    }
+    
+    
+    
+
 }
