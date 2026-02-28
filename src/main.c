@@ -29,15 +29,22 @@ int hashPassword(const char *password){
         return 1;
     }
 
-    printf("Dein Hash: %s", argonString);
+    printf("Your encrypted password: %s", argonString);
     return 0;
 }
 
 
 int main(){
     char password[MAX_PW_LEN];
-    printf("Pls PW eingeben: ");
-    fgets()    
-    memset(password,0,strlen(password));        // delete the password from RAM
+    printf("Please enter your password: ");
+    if (fgets(password, MAX_PW_LEN,stdin) == NULL){
+        printf("Smth failed.");
+        return 1;
+    };
 
+    password[strcspn(password, "\n")] = 0;      // null-terminator
+
+    hashPassword(password);
+    memset(password,0,strlen(password));        // delete the password from RAM
+    return 0;
 }
